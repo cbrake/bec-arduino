@@ -1,4 +1,7 @@
 // Receive sketch used to report quality of reception.
+// 2012-03-22 <cbrake@bec-systems.com> http://opensource.org/licenses/mit-license.php
+
+// based on https://github.com/jcw/jeelib/tree/master/examples/RF12/rfRangeRX
 // 2011-05-14 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
 
 // Based on a sample implementation by Steve Evans (@tankslappa).
