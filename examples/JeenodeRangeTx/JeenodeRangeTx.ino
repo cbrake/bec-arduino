@@ -21,6 +21,8 @@ static void activityLed (byte on) {
 }
 
 void setup() {
+  Serial.begin(57600);
+  Serial.print("\n[JeenodeRangeTx]");
   rf12_initialize('T', RF12_915MHZ);
 }
 
