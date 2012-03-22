@@ -4,26 +4,26 @@
 // Based on a sample implementation by Steve Evans (@tankslappa).
 
 #include <JeeLib.h>
-#include <PortsLCD.h>
 
 #define BUFFER_SIZE 64
 #define DISPLAY_INTERVAL 500 // ms
+#define LED_PIN     9   // activity LED, comment out to disable
 
-PortI2C myI2C (3);
-LiquidCrystalI2C lcd (myI2C);
-MilliTimer displayTimer;
+//PortI2C myI2C (3);
+MilliTimer statTimer;
 
 byte timeBuf [BUFFER_SIZE]; // index is time slot, value is last packet
 byte seqBuf [BUFFER_SIZE];  // index is last packet, value is time slot
 char history [11];
 byte lastSeq;
 
-static void lcd3dig (byte x, byte y, byte value, char fill =' ') {
-  lcd.setCursor(x, y);
-  lcd.print(value >= 100 ? (char) ('0' + value / 100) : fill);
-  lcd.print(value >= 10 ? (char) ('0' + (value / 10) % 10) : fill);
-  lcd.print(value % 10);
+static void activityLed (byte on) {
+#ifdef LED_PIN
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, !on);
+#endif
 }
+
 
 static void gotPacket () {
   byte tenths = millis() / 100;
@@ -60,31 +60,30 @@ static void updateHistory () {
 }
 
 void setup () {
-  lcd.begin(16, 2);
-  lcd.setCursor(0, 0);
-  lcd.print("xxx %/5s xxx %/s");
-  lcd.setCursor(0, 1);
-  lcd.print("#xxx >xxxxxxxxxx");
-  rf12_initialize('R', RF12_868MHZ, 88);
-  // synchronize the display to 0.1s clock transitions
-  displayTimer.set(DISPLAY_INTERVAL - millis() % DISPLAY_INTERVAL - 1);
+  Serial.begin(57600);
+  Serial.print("\n[JeenodeRangeRx]");
+  rf12_initialize('R', RF12_915MHZ);
 }
 
 void loop () {
   if (rf12_recvDone() && rf12_crc == 0 && rf12_len == 1) {
     lastSeq = rf12_data[0];
-    lcd3dig(1, 1, lastSeq, '0');
     gotPacket();
+    activityLed(1);
+    delay(5);
+    activityLed(0);
+    Serial.print("R ");
+    Serial.print(lastSeq);
+    Serial.print("\n");
   }
     
-  if (displayTimer.poll(DISPLAY_INTERVAL)) {
+  if (statTimer.poll(DISPLAY_INTERVAL)) {
     // number of packets received in the last 5 seconds, as percentage
-    lcd3dig(0, 0, recvCount(50) * 2);
+    //lcd3dig(0, 0, recvCount(50) * 2);
     // number of packets received in the last second, as percentage
-    lcd3dig(9, 0, recvCount(10) * 10);
+    //lcd3dig(9, 0, recvCount(10) * 10);
     // show number of packets received in the last 10 display intervals
     updateHistory();
-    lcd.setCursor(6, 1);
-    lcd.print(history);
+    //lcd.print(history);
   }
 }
