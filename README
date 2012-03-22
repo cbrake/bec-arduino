@@ -3,6 +3,7 @@ BEC Systems Arduino Library
 Currently depends on the Jeelib library: https://github.com/jcw/jeelib
 
 To use, clone this project to the libraries/BecArduino directory in your
-Arduino sketches area.
+Arduino sketches area, or install directly in <arduino install>/libraries
+directory.
 
 
