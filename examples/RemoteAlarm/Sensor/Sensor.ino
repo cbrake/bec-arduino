@@ -58,6 +58,7 @@ void send_payload()
   rf12_sleep(RF12_WAKEUP);
   while (!rf12_canSend())
     rf12_recvDone();
+
   bool switch_state = check_switches();
   rf12_sendStart(0, &switch_state, sizeof switch_state);
   rf12_sendWait(SLEEP_MODE_STANDBY);
@@ -78,7 +79,7 @@ void loop() {
     sent = true;
   }
   
-  if (sendTimer.poll(30000)) {
+  if (sendTimer.poll(20000)) {
     sent = false;
     //activityLed(1);
     // debug_switch();
@@ -86,6 +87,6 @@ void loop() {
     //activityLed(0);
   }
   
-  Sleepy::loseSomeTime(10000);
+  Sleepy::loseSomeTime(5000);
 }
 
