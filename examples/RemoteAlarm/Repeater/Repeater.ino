@@ -9,18 +9,31 @@
 #include <JeeLib.h>
 
 #define LED_PIN     9   // activity LED, comment out to disable
+#define GREEN_LED_PIN  7  // P4
+
+MilliTimer heartbeatLed;
 
 static void activityLed (byte on) {
-#ifdef LED_PIN
     pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, !on);
-#endif
+    digitalWrite(LED_PIN, on);
 }
 
 void setup () {
   Serial.begin(57600);
   Serial.print("\n[BEC Alarm Repeater]");
   rf12_initialize('S', RF12_915MHZ);
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, 0);
+
+  // blink green LED on startup
+  pinMode(GREEN_LED_PIN, OUTPUT);
+  digitalWrite(GREEN_LED_PIN, 1);
+  delay(200);
+  digitalWrite(GREEN_LED_PIN, 0);
+  delay(200);
+  digitalWrite(GREEN_LED_PIN, 1);
+  delay(200);
+  digitalWrite(GREEN_LED_PIN, 0);
 }
 
 void send_payload(byte data)
@@ -40,6 +53,12 @@ void loop () {
     Serial.print(lastSeq);
     Serial.print("\n");
     send_payload(lastSeq);
+  }
+
+  if (heartbeatLed.poll(1000)) {
+    digitalWrite(GREEN_LED_PIN, 1);
+    delay(10);
+    digitalWrite(GREEN_LED_PIN, 0);
   }
 }
 
