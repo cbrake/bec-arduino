@@ -22,9 +22,30 @@ static void activityLed (byte on) {
     digitalWrite(LED_PIN, on);
 }
 
+enum state {
+  STATE_INVALID,
+  STATE_NORMAL,
+  STATE_SENSOR_ERROR,
+  STATE_ALARM,
+};
+
+
+int state = STATE_INVALID;
+
+bool sensor_ok = true;
+bool received_sensor_data = false;
+
+char * state_desc[] = {
+  "STATE:INVALID",
+  "STATE:NORMAL",
+  "STATE:SENSOR_ERROR",
+  "STATE:ALARM"
+};
+
+
 void setup () {
   Serial.begin(57600);
-  Serial.print("\n[BEC Alarm Monitor]");
+  Serial.print("\n[BEC Alarm Monitor]\n");
   rf12_initialize('R', RF12_915MHZ);
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, 0);
@@ -38,18 +59,19 @@ void setup () {
   digitalWrite(GREEN_LED_PIN, 1);
   delay(200);
   digitalWrite(GREEN_LED_PIN, 0);
+
+  set_state(STATE_NORMAL);
 }
 
-enum state {
-  STATE_NORMAL,
-  STATE_SENSOR_ERROR,
-  STATE_ALARM,
-};
 
-int state;
-
-bool sensor_ok = true;
-bool received_sensor_data = false;
+void set_state(int new_state)
+{
+  if (new_state != state) {
+    state = new_state;
+    Serial.print(state_desc[new_state]);
+    Serial.print("\n");
+  }
+}
 
 void loop () {
   if (rf12_recvDone() && rf12_crc == 0 && rf12_len == 1) {
@@ -74,17 +96,17 @@ void loop () {
     switch (state) {
       case STATE_NORMAL: {
         if (!received_sensor_data) 
-          state = STATE_SENSOR_ERROR;
+          set_state(STATE_SENSOR_ERROR);
         break;
       }
       case STATE_SENSOR_ERROR: {
         if (received_sensor_data)
-          state = STATE_NORMAL;
+          set_state(STATE_NORMAL);
         break;
       }                         
       case STATE_ALARM: {
         if (!received_sensor_data)
-          state = STATE_SENSOR_ERROR;
+          set_state(STATE_SENSOR_ERROR);
         break;
       }
     }
@@ -98,17 +120,17 @@ void loop () {
   switch (state) {
     case STATE_NORMAL: {
       if (!sensor_ok) 
-        state = STATE_ALARM;
+        set_state(STATE_ALARM);
         break;
     }
     case STATE_ALARM: {
       if (sensor_ok) 
-        state = STATE_NORMAL;
+        set_state(STATE_NORMAL);
       break;
     }
     case STATE_SENSOR_ERROR: {
       if (received_sensor_data)
-        state = STATE_NORMAL;
+        set_state(STATE_NORMAL);
     }
   }
 
