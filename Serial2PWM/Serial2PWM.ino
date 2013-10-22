@@ -1,6 +1,7 @@
 /*
   Reads a binary byte on serial line and outputs
-  value to PWM channel on digital I/O #3
+  value to PWM channel on digital I/O #3.
+  Arduino PWM runs at ~500Hz.
  */
  
 // the setup routine runs once when you press reset:
