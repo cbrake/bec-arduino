@@ -1,6 +1,6 @@
 /*
   Reads a binary byte on serial line and outputs
-  value to PWM channel
+  value to PWM channel on digital I/O #3
  */
  
 // the setup routine runs once when you press reset:
