@@ -3,6 +3,7 @@
 // relay plug is connected to Port 3
 // see http://jeelabs.net/projects/hardware/wiki/JeeNode for information on how
 // JeeNode ports map to Arduino port names
+// relay plug can be purchased from: http://moderndevice.com/product/relay-plug/
 #define PIN_RELAY_A  16      // main power
 #define PIN_RELAY_D  6       // connected to push button switch
 
