@@ -66,11 +66,15 @@ void setPwmFrequency(int pin, int divisor) {
     TCCR2B = TCCR2B & 0b11111000 | mode;
   }
 }
- 
+
+// definitions of bytes to send
+#define SERIAL_SEND_POWERUP  0x55
+
 // the setup routine runs once when you press reset:
 void setup() {                
   analogWrite(3, 0);
   Serial.begin(115200);
+  Serial.write(SERIAL_SEND_POWERUP);
   
   // PWM frequency can be adjusted using the following
   // 1 -> 31.3KHz
