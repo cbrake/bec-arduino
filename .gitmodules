@@ -1,3 +1,6 @@
 [submodule "libraries/JeeLib"]
 	path = libraries/JeeLib
 	url = git://github.com/jcw/jeelib.git
+[submodule "adison-esp8266"]
+	path = adison-esp8266
+	url = https://github.com/AdisonTech/adison-esp8266.git
