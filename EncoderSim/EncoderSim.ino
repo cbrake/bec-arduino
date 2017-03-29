@@ -11,10 +11,10 @@
  */
 
 
-const int numSteps = 2;
+const int numSteps = 50;
 const int A = 8;
 const int B = 10;
-const int periodUs = 1000;
+const int periodUs = 500;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
