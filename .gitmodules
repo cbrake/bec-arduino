@@ -4,3 +4,6 @@
 [submodule "adison-esp8266"]
 	path = adison-esp8266
 	url = https://github.com/AdisonTech/adison-esp8266.git
+[submodule "libraries/STM32sleep"]
+	path = libraries/STM32sleep
+	url = https://github.com/chacal/stm32sleep
