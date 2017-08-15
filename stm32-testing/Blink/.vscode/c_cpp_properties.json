@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "/home/cbrake/Arduino/hardware/Arduino_STM32/STM32F4/cores/maple",
+                "${workspaceRoot}",
+                "/home/cbrake/Arduino/hardware/Arduino_STM32/STM32F1/cores/maple"
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": false,
+                "path": [
+                    "/home/cbrake/Arduino/hardware/Arduino_STM32/STM32F4/cores/maple",
+                    "${workspaceRoot}"
+                ]
+            },
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 2
+}
