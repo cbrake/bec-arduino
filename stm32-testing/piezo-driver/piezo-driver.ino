@@ -18,7 +18,15 @@ HardwareTimer pwmtimer(2);
 uint16 maxduty, duty;  
 uint32 period, mypulse;
 
-int state = 0;
+enum {
+	STATE_IDLE,
+	STATE_RISING,
+	STATE_DWELL,
+	STATE_FALLING,
+};
+
+int state = STATE_IDLE;
+
 
 // params
 int rising_us = 0;
@@ -26,44 +34,92 @@ int dwell_us = 0;
 int falling_us = 0;
 int duty_perc = 0;
 
+int elapsed_time_us = 0;
+
+void set_pwm(int duty) {
+	pwmtimer.pause();
+	pwmtimer.setCompare(TIMER_CH2, duty);  //Pulse width
+	pwmtimer.refresh();
+	pwmtimer.resume();
+}
+
+int handler_toggle = 0;
+
 void handler(void) {
-  digitalWrite(PA2, state);
-  state = !state;
+	elapsed_time_us += 10;
+	handler_toggle = !handler_toggle;
+	digitalWrite(PA2, handler_toggle);
+
+	switch (state) {
+		case STATE_IDLE:
+			// do nothing
+			break;
+		case STATE_RISING:
+			if (elapsed_time_us >= rising_us) {
+				state = STATE_DWELL;
+			}
+			break;
+		case STATE_DWELL:
+			if (elapsed_time_us >= rising_us + dwell_us) {
+				state = STATE_FALLING;
+			}
+			break;
+		case STATE_FALLING:
+			if (elapsed_time_us >= rising_us + dwell_us + falling_us) {
+				state = STATE_IDLE;
+				pwmtimer.pause();
+			}
+			break;
+	}
+
+	if (state == STATE_IDLE) {
+		digitalWrite(PA3, 0);
+	} else {
+		digitalWrite(PA3, 1);
+	}
 }
 
 // the setup function runs once when you press reset or power the board
 void setup() {
-  Serial.begin(BAUD);
-  cmdInit(&Serial);
+	Serial.begin(BAUD);
+	cmdInit(&Serial);
 
-  // initialize digital pin LED_BUILTIN as an output.
-  pinMode(PC13, OUTPUT);
-  pinMode(PA2, OUTPUT);
+	// initialize digital pin LED_BUILTIN as an output.
+	pinMode(PC13, OUTPUT);
+	pinMode(PA2, OUTPUT);  // toggle in handler
+	pinMode(PA3, OUTPUT);  // high during command
 
-  pwmtimer.pause();
-  pwmtimer.setPrescaleFactor(1);        //Prescaler
-  pwmtimer.setOverflow(98);            //Period width
-  pwmtimer.setCompare(TIMER_CH2, 50);  //Pulse width
-  pwmtimer.refresh();
-  pwmtimer.resume();
-  pinMode(pwmOutPin, PWM);
+	pwmtimer.pause();
+	pwmtimer.setPrescaleFactor(1);        //Prescaler
+	pwmtimer.setOverflow(98);            //Period width
+	pwmtimer.refresh();
+	pinMode(pwmOutPin, PWM);
 
-  Timer3.pause();
-  Timer3.setCount(0);
-  Timer3.setOverflow(360);
-  Timer3.attachCompare1Interrupt(handler);
-  Timer3.resume();  
+	Timer3.pause();
+	Timer3.setCount(0);
+	Timer3.setOverflow(360);
+	Timer3.attachCompare1Interrupt(handler);
+	Timer3.resume();  
 
-  cmdAdd("run", run);
+	cmdAdd("run", run);
 }
 
 // the loop function runs over and over again forever
 void loop() {
-  digitalWrite(PC13, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(50);                       // wait for a second
-  digitalWrite(PC13, LOW);    // turn the LED off by making the voltage LOW
-  delay(50);                       // wait for a second
-  cmdPoll();
+	/*
+	digitalWrite(PC13, HIGH);   // turn the LED on (HIGH is the voltage level)
+	delay(50);                       // wait for a second
+	digitalWrite(PC13, LOW);    // turn the LED off by making the voltage LOW
+	delay(50);                       // wait for a second
+	if (state != STATE_IDLE) {
+		Serial.print("state: ");
+		Serial.println(state);
+	}
+	*/
+
+	if (state == STATE_IDLE) {
+		cmdPoll();
+	}
 }
 
 void run(int arg_cnt, char **args)
@@ -78,6 +134,7 @@ void run(int arg_cnt, char **args)
 	falling_us = cmdStr2Num(args[3], 10);
 	duty_perc = cmdStr2Num(args[4], 10);
 
+	/*
 	Serial.print("rising: ");
 	Serial.println(rising_us);
 	Serial.print("dwell: ");
@@ -86,4 +143,13 @@ void run(int arg_cnt, char **args)
 	Serial.println(falling_us);
 	Serial.print("duty: ");
 	Serial.println(duty_perc);
+	*/
+
+	Timer3.pause();
+	Timer3.setCount(0);
+	elapsed_time_us = 0;
+	state = STATE_RISING;
+	set_pwm(duty_perc);
+	digitalWrite(PA3, 1);
+	Timer3.resume();  
 }
