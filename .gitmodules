@@ -7,3 +7,6 @@
 [submodule "libraries/STM32sleep"]
 	path = libraries/STM32sleep
 	url = https://github.com/chacal/stm32sleep
+[submodule "libraries/CmdArduino"]
+	path = libraries/CmdArduino
+	url = https://github.com/joshmarinacci/CmdArduino.git
