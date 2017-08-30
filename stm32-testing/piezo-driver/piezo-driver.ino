@@ -29,7 +29,7 @@ enum {
 // variables used to track state of running program
 int state = STATE_IDLE;
 int current_count = 0;
-
+int state_elapsed_time = 0;
 
 // params
 int rising_us = 0;
@@ -39,19 +39,79 @@ int duty_perc = 0;
 int cmd_delay_us = 0;
 int count = 0;
 
-int elapsed_time_us = 0;
 
 void set_pwm(int duty) {
-	pwmtimer.pause();
+	//pwmtimer.pause();
 	pwmtimer.setCompare(TIMER_CH2, duty);  //Pulse width
 	pwmtimer.refresh();
-	pwmtimer.resume();
+	//pwmtimer.resume();
 }
 
 int handler_toggle = 0;
 
+void set_state(int new_state) {
+	state_elapsed_time = 0;
+	state = new_state;
+	int duty;
+
+	// handle processing required at beging of each state
+	switch (state) {
+		case STATE_IDLE:
+			pwmtimer.pause();
+			break;
+		case STATE_RISING:
+			duty = calc_ramp_pwm(state_elapsed_time, rising_us, true, duty_perc);
+			set_pwm(duty);
+			pwmtimer.resume();
+			break;
+		case STATE_DWELL:
+			set_pwm(duty_perc);
+			break;
+		case STATE_FALLING:
+			break;
+		case STATE_DELAY:
+			pwmtimer.pause();
+			break;
+	}
+}
+
+int calc_ramp_pwm(int current_time, int ramp_width, bool up, int duty_perc) {
+	int t = up ? current_time : (ramp_width - current_time);
+	t += 10;
+	return duty_perc * t/(ramp_width + 10);
+}
+
+void test_calc_pwm_ramp() {
+	int ramp_width = 60;
+	int current_time = 0;
+
+	Serial.println("test ramp up calculations (ramp time = 60, duty = 100%)");
+
+	while (current_time <= ramp_width) {
+		Serial.print("time ");
+		Serial.print(current_time);
+		Serial.print(" => ");
+		Serial.print(calc_ramp_pwm(current_time, ramp_width, true, 100));
+		Serial.println("%");
+		current_time += 10;
+	}
+
+	Serial.println("test ramp down calculations (ramp time = 70, duty = 50%)");
+
+	ramp_width = 70;
+	current_time = 0;
+	while (current_time <= ramp_width) {
+		Serial.print("time ");
+		Serial.print(current_time);
+		Serial.print(" => ");
+		Serial.print(calc_ramp_pwm(current_time, ramp_width, false, 50));
+		Serial.println("%");
+		current_time += 10;
+	}
+}
+
 void handler(void) {
-	elapsed_time_us += 10;
+	state_elapsed_time += 10;
 	handler_toggle = !handler_toggle;
 	digitalWrite(PA2, handler_toggle);
 
@@ -60,31 +120,37 @@ void handler(void) {
 			// do nothing
 			break;
 		case STATE_RISING:
-			if (elapsed_time_us >= rising_us) {
-				state = STATE_DWELL;
+			if (state_elapsed_time >= rising_us) {
+				set_state(STATE_DWELL);
+			} else {
+				// ramp up PWM
+				int duty = calc_ramp_pwm(state_elapsed_time, rising_us, true, duty_perc);
+				set_pwm(duty);
 			}
 			break;
 		case STATE_DWELL:
-			if (elapsed_time_us >= rising_us + dwell_us) {
-				state = STATE_FALLING;
+			if (state_elapsed_time >= dwell_us) {
+				set_state(STATE_FALLING);
 			}
 			break;
 		case STATE_FALLING:
-			if (elapsed_time_us >= rising_us + dwell_us + falling_us) {
+			if (state_elapsed_time >= falling_us) {
 				pwmtimer.pause();
 				current_count += 1;
 				if (current_count < count) {
-					state = STATE_DELAY;
+					set_state(STATE_DELAY);
 				} else {
-					state = STATE_IDLE;
+					set_state(STATE_IDLE);
 				}
+			} else {
+				// ramp down PWM
+				int duty = calc_ramp_pwm(state_elapsed_time, falling_us, false, duty_perc);
+				set_pwm(duty);
 			}
 			break;
 		case STATE_DELAY:
-			if (elapsed_time_us >= rising_us + dwell_us + falling_us + cmd_delay_us) {
-				state = STATE_RISING;
-				elapsed_time_us = 0;
-				set_pwm(duty_perc);
+			if (state_elapsed_time >= cmd_delay_us) {
+				set_state(STATE_RISING);
 			}
 			break;
 	}
@@ -119,6 +185,14 @@ void setup() {
 	Timer3.resume();  
 
 	cmdAdd("run", run);
+
+	// this delay is required to give serial console time to open with Arduino env
+	// may not be required for a normal serial console
+	delay(600);
+
+	Serial.println("Piezo driver");
+
+	test_calc_pwm_ramp();
 }
 
 // the loop function runs over and over again forever
@@ -168,10 +242,8 @@ void run(int arg_cnt, char **args)
 
 	Timer3.pause();
 	Timer3.setCount(0);
-	elapsed_time_us = 0;
 	current_count = 0;
-	state = STATE_RISING;
-	set_pwm(duty_perc);
+	set_state(STATE_RISING);
 	digitalWrite(PA3, 1);
 	Timer3.resume();  
 }
