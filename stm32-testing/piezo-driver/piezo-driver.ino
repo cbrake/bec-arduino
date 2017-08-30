@@ -8,7 +8,7 @@
  *   run 60 100 40 60
  */
 
-#include <Cmd.h>
+#include "Cmd.h"
 
 #define BAUD 9600
 
@@ -97,7 +97,7 @@ void setup() {
 
 	Timer3.pause();
 	Timer3.setCount(0);
-	Timer3.setOverflow(360);
+	Timer3.setOverflow(351);
 	Timer3.attachCompare1Interrupt(handler);
 	Timer3.resume();  
 
