@@ -68,6 +68,8 @@ void set_state(int new_state) {
 			set_pwm(duty_perc);
 			break;
 		case STATE_FALLING:
+			duty = calc_ramp_pwm(state_elapsed_time, falling_us, false, duty_perc);
+			set_pwm(duty);
 			break;
 		case STATE_DELAY:
 			pwmtimer.pause();
@@ -77,7 +79,9 @@ void set_state(int new_state) {
 
 int calc_ramp_pwm(int current_time, int ramp_width, bool up, int duty_perc) {
 	int t = up ? current_time : (ramp_width - current_time);
-	t += 10;
+	if (up)
+		t += 10;
+
 	return duty_perc * t/(ramp_width + 10);
 }
 
