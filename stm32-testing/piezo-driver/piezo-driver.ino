@@ -41,10 +41,9 @@ int count = 0;
 
 
 void set_pwm(int duty) {
-	//pwmtimer.pause();
-	pwmtimer.setCompare(TIMER_CH2, duty);  //Pulse width
+	// note, PWM is inverted
+	pwmtimer.setCompare(TIMER_CH2, 100-duty);  //Pulse width
 	pwmtimer.refresh();
-	//pwmtimer.resume();
 }
 
 int handler_toggle = 0;
@@ -57,12 +56,11 @@ void set_state(int new_state) {
 	// handle processing required at beging of each state
 	switch (state) {
 		case STATE_IDLE:
-			pwmtimer.pause();
+			set_pwm(0);
 			break;
 		case STATE_RISING:
 			duty = calc_ramp_pwm(state_elapsed_time, rising_us, true, duty_perc);
 			set_pwm(duty);
-			pwmtimer.resume();
 			break;
 		case STATE_DWELL:
 			set_pwm(duty_perc);
@@ -72,7 +70,7 @@ void set_state(int new_state) {
 			set_pwm(duty);
 			break;
 		case STATE_DELAY:
-			pwmtimer.pause();
+			set_pwm(0);
 			break;
 	}
 }
@@ -139,7 +137,7 @@ void handler(void) {
 			break;
 		case STATE_FALLING:
 			if (state_elapsed_time >= falling_us) {
-				pwmtimer.pause();
+				set_pwm(0);
 				current_count += 1;
 				if (current_count < count) {
 					set_state(STATE_DELAY);
@@ -179,7 +177,9 @@ void setup() {
 	pwmtimer.pause();
 	pwmtimer.setPrescaleFactor(1);        //Prescaler
 	pwmtimer.setOverflow(98);            //Period width
+	pwmtimer.setCompare(TIMER_CH2, 100);  //Pulse width
 	pwmtimer.refresh();
+	pwmtimer.resume();
 	pinMode(pwmOutPin, PWM);
 
 	Timer3.pause();
