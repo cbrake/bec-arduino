@@ -3,7 +3,7 @@
  * 
  * to use, open up serial console, and line ending to Carriage return.
  * command format:
- *   run <rising_us> <dwell_us> <falling_us> <duty_perc>
+ *   run <rising_us> <dwell_us> <falling_us> <duty_perc> <cmd_delay_us> <count>
  * example
  *   run 60 100 40 60
  */
@@ -23,9 +23,12 @@ enum {
 	STATE_RISING,
 	STATE_DWELL,
 	STATE_FALLING,
+	STATE_DELAY,
 };
 
+// variables used to track state of running program
 int state = STATE_IDLE;
+int current_count = 0;
 
 
 // params
@@ -33,6 +36,8 @@ int rising_us = 0;
 int dwell_us = 0;
 int falling_us = 0;
 int duty_perc = 0;
+int cmd_delay_us = 0;
+int count = 0;
 
 int elapsed_time_us = 0;
 
@@ -66,8 +71,20 @@ void handler(void) {
 			break;
 		case STATE_FALLING:
 			if (elapsed_time_us >= rising_us + dwell_us + falling_us) {
-				state = STATE_IDLE;
 				pwmtimer.pause();
+				current_count += 1;
+				if (current_count < count) {
+					state = STATE_DELAY;
+				} else {
+					state = STATE_IDLE;
+				}
+			}
+			break;
+		case STATE_DELAY:
+			if (elapsed_time_us >= rising_us + dwell_us + falling_us + cmd_delay_us) {
+				state = STATE_RISING;
+				elapsed_time_us = 0;
+				set_pwm(duty_perc);
 			}
 			break;
 	}
@@ -124,8 +141,8 @@ void loop() {
 
 void run(int arg_cnt, char **args)
 {
-	if (arg_cnt < 5) {
-		Serial.println("Usage: run <rising_us> <dwell_us> <falling_us> <duty_perc>");
+	if (arg_cnt < 7) {
+		Serial.println("Usage: run <rising_us> <dwell_us> <falling_us> <duty_perc> <cmd_delay_us> <count>");
 		return;
 	}
 
@@ -133,6 +150,10 @@ void run(int arg_cnt, char **args)
 	dwell_us = cmdStr2Num(args[2], 10);
 	falling_us = cmdStr2Num(args[3], 10);
 	duty_perc = cmdStr2Num(args[4], 10);
+	cmd_delay_us = cmdStr2Num(args[5], 10);
+	count = cmdStr2Num(args[6], 10);
+
+	// we can't print stuff here because it messed up the timing due to serial activity
 
 	/*
 	Serial.print("rising: ");
@@ -148,6 +169,7 @@ void run(int arg_cnt, char **args)
 	Timer3.pause();
 	Timer3.setCount(0);
 	elapsed_time_us = 0;
+	current_count = 0;
 	state = STATE_RISING;
 	set_pwm(duty_perc);
 	digitalWrite(PA3, 1);
