@@ -15,6 +15,9 @@
 const int pwmOutPin = PA1; // pin10
 HardwareTimer pwmtimer(2);
 
+const int hander_period = 5;
+// must set Timer3.setOverflow(351/2) if you change hander_period
+
 uint16 maxduty, duty;  
 uint32 period, mypulse;
 
@@ -78,9 +81,9 @@ void set_state(int new_state) {
 int calc_ramp_pwm(int current_time, int ramp_width, bool up, int duty_perc) {
 	int t = up ? current_time : (ramp_width - current_time);
 	if (up)
-		t += 10;
+		t += hander_period;
 
-	return duty_perc * t/(ramp_width + 10);
+	return duty_perc * t/(ramp_width + hander_period);
 }
 
 void test_calc_pwm_ramp() {
@@ -95,7 +98,7 @@ void test_calc_pwm_ramp() {
 		Serial.print(" => ");
 		Serial.print(calc_ramp_pwm(current_time, ramp_width, true, 100));
 		Serial.println("%");
-		current_time += 10;
+		current_time += hander_period;
 	}
 
 	Serial.println("test ramp down calculations (ramp time = 70, duty = 50%)");
@@ -108,12 +111,12 @@ void test_calc_pwm_ramp() {
 		Serial.print(" => ");
 		Serial.print(calc_ramp_pwm(current_time, ramp_width, false, 50));
 		Serial.println("%");
-		current_time += 10;
+		current_time += hander_period;
 	}
 }
 
 void handler(void) {
-	state_elapsed_time += 10;
+	state_elapsed_time += hander_period;
 	handler_toggle = !handler_toggle;
 	digitalWrite(PA2, handler_toggle);
 
@@ -184,7 +187,7 @@ void setup() {
 
 	Timer3.pause();
 	Timer3.setCount(0);
-	Timer3.setOverflow(351);
+	Timer3.setOverflow(351/2);
 	Timer3.attachCompare1Interrupt(handler);
 	Timer3.resume();  
 
