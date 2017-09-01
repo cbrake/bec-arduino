@@ -197,7 +197,7 @@ void setup() {
 	// may not be required for a normal serial console
 	delay(600);
 
-	Serial.println("Piezo driver");
+	Serial.println("Piezo driver, 5us version");
 
 	test_calc_pwm_ramp();
 }
