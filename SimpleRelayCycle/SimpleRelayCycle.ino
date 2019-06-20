@@ -2,6 +2,7 @@
 
 // relay plug is connected to Port 3
 // see http://jeelabs.net/projects/hardware/wiki/JeeNode for information on how
+// Use Arduino UNO as board
 // JeeNode ports map to Arduino port names
 // relay plug can be purchased from: http://moderndevice.com/product/relay-plug/
 #define PIN_RELAY_A  16      // main power
@@ -15,12 +16,19 @@ void setup() {
   pinMode(PIN_RELAY_D, OUTPUT);
 }
 
-int cycle_count = 0;
+int pulse_count = 0;
+int stop = 50;
 
 void loop() {
-  // Power on 
+  if (pulse_count >= stop) {
+    Serial.print("sent ");
+    Serial.print(stop);
+    Serial.print(" pulses\n");
+    while(1) {}
+  }
   digitalWrite(PIN_RELAY_A, HIGH);
   delay(500);
   digitalWrite(PIN_RELAY_A, LOW);
   delay(500);
+  pulse_count++;
 }
