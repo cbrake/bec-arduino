@@ -32,9 +32,9 @@ void loop() {
   
   digitalWrite(PIN_RELAY_A, HIGH);
   digitalWrite(PIN_FET, HIGH);
-  //delayMicroseconds(490);
+  delayMicroseconds(490);
   digitalWrite(PIN_RELAY_A, LOW);
   digitalWrite(PIN_FET, LOW);
-  //delayMicroseconds(490);
+  delayMicroseconds(490);
   pulse_count++;
 }
