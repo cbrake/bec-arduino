@@ -23,7 +23,7 @@ int stop = 5000;
 
 void loop() {
   
-  if (pulse_count >= stop) {
+  if (pulse_count >= stop && false) {
     Serial.print("sent ");
     Serial.print(stop);
     Serial.print(" pulses\n");
@@ -33,8 +33,10 @@ void loop() {
   digitalWrite(PIN_RELAY_A, HIGH);
   digitalWrite(PIN_FET, HIGH);
   delayMicroseconds(490);
+  //delay(4);
   digitalWrite(PIN_RELAY_A, LOW);
   digitalWrite(PIN_FET, LOW);
   delayMicroseconds(490);
+  //delay(4);
   pulse_count++;
 }
