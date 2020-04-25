@@ -19,10 +19,10 @@ void setup() {
 }
 
 int pulse_count = 0;
-int stop = 5000;
+int stop = 0;
 
 void loop() {
-  if (pulse_count >= stop && false) {
+  if (stop && pulse_count >= stop) {
     Serial.print("sent ");
     Serial.print(stop);
     Serial.print(" pulses\n");
